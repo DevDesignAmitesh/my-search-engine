@@ -17,18 +17,19 @@ export async function htmlParser(url: string) {
       return item.href;
     });
 
-  const title = root
-    .getElementsByTagName("title")
-    .map((item) => item.innerText);
+  // const title = root
+  //   .getElementsByTagName("title")
+  //   .map((item) => item.innerText);
 
   const heading = root.getElementsByTagName("h1").map((item) => item.innerText);
 
-  const raw_content = convert(input);
+  // const raw_content = convert(input);
 
   return {
-    raw_content,
+    html: input,
     hrefs: hrefs,
-    title: title[0] ?? heading[0]!,
+    // raw_content,
+    // title: title[0] ?? heading[0] ?? heading[1] ?? heading[2],
   };
 }
 

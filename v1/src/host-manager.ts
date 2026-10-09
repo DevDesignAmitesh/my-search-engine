@@ -3,10 +3,12 @@ type Hosts = Map<string, { nextAllowedTime: number; urls: Set<string> }>;
 class HostManager {
   private static instance: HostManager;
   private hosts: Hosts;
+  private urls: Set<string>;
 
   constructor() {
     // todo: hydrate it via db
     this.hosts = new Map();
+    this.urls = new Set();
   }
 
   static getInstance(): HostManager {
@@ -34,6 +36,8 @@ class HostManager {
     } else {
       this.hosts.get(host)!.urls.add(url);
     }
+
+    this.urls.add(url);
   }
 
   getNextHostUrl() {
@@ -49,6 +53,7 @@ class HostManager {
 
         // deleting it then
         val.urls.delete(url);
+        this.urls.delete(url);
 
         // updating the nextallowed time
         let timeObject = new Date();
@@ -64,6 +69,10 @@ class HostManager {
     }
 
     return nextAllowedUrl;
+  }
+
+  checkExistingUrl({ url }: { url: string }) {
+    return this.urls.has(url);
   }
 }
 

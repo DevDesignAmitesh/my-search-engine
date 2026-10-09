@@ -1,21 +1,35 @@
-import { htmlParser } from "./htmlparser";
-import { tokeizer } from "./tokenizer";
-import { normalizeURL } from "./url-normalizer";
+import express from "express";
+import cors from "cors";
+import { hostManager } from "./host-manager";
+import { normalizeURLFn } from "./url-normalizer";
+import { crawlerLoop } from "./crawlerLoop";
 
-const { hrefs, raw_content, title } = await htmlParser("https://amitesh.work/");
+const app = express();
+const port = 4000;
 
-console.log("title", title);
+app.use(express.json());
+app.use(cors());
 
-const tokens = tokeizer(raw_content);
+app.post("/submit-url", async (req, res) => {
+  const { url } = req.body;
 
-console.log("tokens", tokens);
+  // todo: normalize url
+  const normaliedUrl = normalizeURLFn(url);
 
-const urls = [];
+  // check if its already existing
+  const isNew = hostManager.checkExistingUrl({ url: normaliedUrl });
 
-for (let i = 0; i < hrefs.length; i++) {
-  urls.push(normalizeURL(hrefs[i] ?? ""));
-}
+  if (!isNew) {
+    res.status(403).json({ message: "url already exists" });
+    return;
+  }
 
-console.log("urls", urls);
+  // add this url in the host's queue
+  hostManager.addUrlToHosts(normaliedUrl);
 
-// dedup logic will be written here
+  res.status(200).json({ message: "url accepted for crawing" });
+});
+
+app.listen(port, () => console.log("code is running at", port));
+
+setInterval(crawlerLoop, 4 * 1000);

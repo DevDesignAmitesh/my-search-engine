@@ -1,6 +1,6 @@
 import normalizeUrl from "normalize-url";
 
-export function normalizeURL(url: string) {
+export function normalizeURLFn(url: string) {
   try {
     return normalizeUrl(url, {
       removeExplicitPort: true,
@@ -12,5 +12,3 @@ export function normalizeURL(url: string) {
     return "";
   }
 }
-
-// console.log(normalizeURL("https://amitesh/work//amitesh.pdf"));
