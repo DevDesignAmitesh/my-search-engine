@@ -17,9 +17,9 @@ app.post("/submit-url", async (req, res) => {
   const normaliedUrl = normalizeURLFn(url);
 
   // check if its already existing
-  const isNew = hostManager.checkExistingUrl({ url: normaliedUrl });
+  const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
 
-  if (!isNew) {
+  if (existingUrl) {
     res.status(403).json({ message: "url already exists" });
     return;
   }

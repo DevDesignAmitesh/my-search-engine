@@ -1,14 +1,17 @@
-type Hosts = Map<string, { nextAllowedTime: number; urls: Set<string> }>;
+type Hosts = Map<
+  string,
+  { nextAllowedTime: number; urls: { url: string; id: string }[] }
+>;
 
 class HostManager {
   private static instance: HostManager;
   private hosts: Hosts;
-  private urls: Set<string>;
+  private urls: string[];
 
   constructor() {
     // todo: hydrate it via db
     this.hosts = new Map();
-    this.urls = new Set();
+    this.urls = [];
   }
 
   static getInstance(): HostManager {
@@ -31,29 +34,33 @@ class HostManager {
 
       this.hosts.set(host, {
         nextAllowedTime: timeObject.valueOf(),
-        urls: new Set(url),
+        urls: [{ url, id: crypto.randomUUID() }],
       });
     } else {
-      this.hosts.get(host)!.urls.add(url);
+      this.hosts.get(host)!.urls.push({ url, id: crypto.randomUUID() });
     }
 
-    this.urls.add(url);
+    this.urls.push(url);
   }
 
   getNextHostUrl() {
     let nextAllowedUrl: string | null = null;
+    let nextAllowedUrlId: string | null = null;
 
     const now = Date.now();
 
     for (const [_key, val] of this.hosts.entries()) {
-      if (val.nextAllowedTime > now && val.urls.size) {
+      if (now > val.nextAllowedTime && val.urls.length) {
         // getting the first url and assigning it
-        const url = Array.from(val.urls)[0]!;
-        nextAllowedUrl = url;
+        const url = val.urls[0]!;
+        nextAllowedUrl = url.url;
+        nextAllowedUrlId = url.id;
 
         // deleting it then
-        val.urls.delete(url);
-        this.urls.delete(url);
+        const filteredHostUrls = val.urls.filter((val) => val.url !== url.url);
+        const filteredUrls = this.urls.filter((val) => val !== url.url);
+        val.urls = filteredHostUrls;
+        this.urls = filteredUrls;
 
         // updating the nextallowed time
         let timeObject = new Date();
@@ -63,16 +70,14 @@ class HostManager {
         // assigning it
         val.nextAllowedTime = timeObject.valueOf();
         break;
-      } else {
-        nextAllowedUrl = null;
       }
     }
 
-    return nextAllowedUrl;
+    return { url: nextAllowedUrl, id: nextAllowedUrlId };
   }
 
   checkExistingUrl({ url }: { url: string }) {
-    return this.urls.has(url);
+    return this.urls.find((val) => val == url);
   }
 }
 
