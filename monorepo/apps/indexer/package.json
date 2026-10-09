@@ -1,0 +1,13 @@
+{
+  "name": "indexer",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@repo/redis-manager": "*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

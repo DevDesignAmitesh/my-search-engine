@@ -1,0 +1,19 @@
+{
+  "name": "@repo/redis-manager",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./client": "./index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/redis": "^4.0.11",
+    "redis": "^6.3.0"
+  }
+}
