@@ -1,0 +1,39 @@
+import { htmlParser } from "./htmlparser";
+import { indexerManager } from "./index-manager";
+import { metadataManager } from "./metadata-manager";
+import { tokeizer } from "./tokenizer";
+
+export async function indexerLoop() {
+  const metadatas = metadataManager.getAll();
+
+  for (const [key, val] of metadatas.entries()) {
+    if (val.status !== "crawled") continue;
+
+    const { raw_text, title } = await htmlParser(
+      val.raw_file_location!,
+      "file",
+    );
+
+    const tokens = tokeizer(raw_text);
+    const snippet = raw_text.slice(0, 300);
+
+    const existingMetaData = metadataManager.get({
+      url: val.url,
+      host: val.host,
+      id: val.id,
+    })!;
+
+    metadataManager.add({
+      ...existingMetaData,
+      title,
+      snippet,
+      status: "indexed",
+    });
+
+    for (const word of tokens) {
+      if (word.length <= 3) continue;
+
+      indexerManager.add(word, val.url);
+    }
+  }
+}

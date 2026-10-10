@@ -13,7 +13,7 @@ export async function crawlerLoop() {
 
   try {
     // get the html
-    const { hrefs, html } = await htmlParser(url);
+    const { hrefs, html } = await htmlParser(url, "url");
 
     if (!fs.existsSync("./raw/data"))
       fs.mkdirSync("./raw/data", { recursive: true });
@@ -39,15 +39,19 @@ export async function crawlerLoop() {
     for (const val of hrefs) {
       // if a in-valid url
       const normaliedUrl = normalizeURLFn(val);
-      if (!normaliedUrl) return;
+      if (!normaliedUrl) continue;
 
       // check if its already existing
       const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
       if (existingUrl) continue;
 
+      console.log("existingURL", existingUrl);
+
       hostManager.addUrlToHosts(normaliedUrl);
     }
   } catch (e) {
+    console.log("error", e);
+
     const crawlTime = Date.now() - now;
 
     // save meta-data

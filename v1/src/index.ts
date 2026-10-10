@@ -3,6 +3,7 @@ import cors from "cors";
 import { hostManager } from "./host-manager";
 import { normalizeURLFn } from "./url-normalizer";
 import { crawlerLoop } from "./crawlerLoop";
+import { indexerLoop } from "./indexer";
 
 const app = express();
 const port = 4000;
@@ -24,6 +25,8 @@ app.post("/submit-url", async (req, res) => {
   // check if its already existing
   const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
 
+  console.log("existingURL", existingUrl);
+
   if (existingUrl) {
     res.status(403).json({ message: "url already exists" });
     return;
@@ -38,3 +41,4 @@ app.post("/submit-url", async (req, res) => {
 app.listen(port, () => console.log("code is running at", port));
 
 setInterval(crawlerLoop, 4 * 1000);
+setInterval(indexerLoop, 4 * 1000);

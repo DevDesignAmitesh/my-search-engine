@@ -42,7 +42,7 @@ class HostManager {
 
     this.urls.push(url);
 
-    console.log("ADDED_URL", url);
+    // console.log("ADDED_URL", url);
   }
 
   getNextHostUrl() {
