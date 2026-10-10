@@ -9,6 +9,6 @@ export function normalizeURLFn(url: string) {
     });
   } catch (e) {
     console.log("this is the culprit", url);
-    return "";
+    return null;
   }
 }

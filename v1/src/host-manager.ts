@@ -41,6 +41,8 @@ class HostManager {
     }
 
     this.urls.push(url);
+
+    console.log("ADDED_URL", url);
   }
 
   getNextHostUrl() {
@@ -49,7 +51,9 @@ class HostManager {
 
     const now = Date.now();
 
-    for (const [_key, val] of this.hosts.entries()) {
+    for (const [key, val] of this.hosts.entries()) {
+      console.log("host", key, "isAllowed-or-not", now - val.nextAllowedTime);
+
       if (now > val.nextAllowedTime && val.urls.length) {
         // getting the first url and assigning it
         const url = val.urls[0]!;
@@ -58,9 +62,7 @@ class HostManager {
 
         // deleting it then
         const filteredHostUrls = val.urls.filter((val) => val.url !== url.url);
-        const filteredUrls = this.urls.filter((val) => val !== url.url);
         val.urls = filteredHostUrls;
-        this.urls = filteredUrls;
 
         // updating the nextallowed time
         let timeObject = new Date();
@@ -71,7 +73,13 @@ class HostManager {
         val.nextAllowedTime = timeObject.valueOf();
         break;
       }
+
+      if (!val.urls.length) {
+        this.hosts.delete(key);
+      }
     }
+
+    console.log("next-url", nextAllowedUrl);
 
     return { url: nextAllowedUrl, id: nextAllowedUrlId };
   }

@@ -16,6 +16,11 @@ app.post("/submit-url", async (req, res) => {
   // todo: normalize url
   const normaliedUrl = normalizeURLFn(url);
 
+  if (!normaliedUrl) {
+    res.status(403).json({ message: "invalid-url" });
+    return;
+  }
+
   // check if its already existing
   const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
 

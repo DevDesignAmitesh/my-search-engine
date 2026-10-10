@@ -21,7 +21,7 @@ export async function htmlParser(url: string) {
   //   .getElementsByTagName("title")
   //   .map((item) => item.innerText);
 
-  const heading = root.getElementsByTagName("h1").map((item) => item.innerText);
+  // const heading = root.getElementsByTagName("h1").map((item) => item.innerText);
 
   // const raw_content = convert(input);
 

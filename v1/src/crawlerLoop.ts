@@ -4,10 +4,10 @@ import fs from "fs";
 import { normalizeURLFn } from "./url-normalizer";
 
 export async function crawlerLoop() {
-  console.log("running");
+  const now = Date.now();
+
   // getting per host url
   const { url, id } = hostManager.getNextHostUrl();
-  console.log("url", url);
   if (!url) return;
 
   // get the html
@@ -16,15 +16,19 @@ export async function crawlerLoop() {
   if (!fs.existsSync("./raw/data"))
     fs.mkdirSync("./raw/data", { recursive: true });
 
-  if (!fs.existsSync(`./raw/data/${id}`))
-    fs.writeFileSync(`./raw/data/${id}`, html);
+  if (!fs.existsSync(`./raw/data/${id}html`))
+    fs.writeFileSync(`./raw/data/${id}.html`, html);
+
+  console.log("time-taken-in-a-single-crawl", Date.now() - now);
 
   for (const val of hrefs) {
+    // if a in-valid url
     const normaliedUrl = normalizeURLFn(val);
+    if (!normaliedUrl) return;
 
     // check if its already existing
     const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
-    if (existingUrl) return;
+    if (existingUrl) continue;
 
     hostManager.addUrlToHosts(normaliedUrl);
   }
