@@ -3,7 +3,8 @@ import cors from "cors";
 import { hostManager } from "./host-manager";
 import { normalizeURLFn } from "./url-normalizer";
 import { crawlerLoop } from "./crawlerLoop";
-import { indexerLoop } from "./indexer";
+import { indexerLoop } from "./indexerLoop";
+import { indexerManager } from "./index-manager";
 
 const app = express();
 const port = 4000;
@@ -11,7 +12,7 @@ const port = 4000;
 app.use(express.json());
 app.use(cors());
 
-app.post("/submit-url", async (req, res) => {
+app.post("/submit-url", (req, res) => {
   const { url } = req.body;
 
   // todo: normalize url
@@ -36,6 +37,14 @@ app.post("/submit-url", async (req, res) => {
   hostManager.addUrlToHosts(normaliedUrl);
 
   res.status(200).json({ message: "url accepted for crawing" });
+});
+
+app.get("/search", (req, res) => {
+  const { query } = req.query;
+
+  const suggestions = indexerManager.search(query as string);
+
+  return res.status(200).json({ suggestions });
 });
 
 app.listen(port, () => console.log("code is running at", port));

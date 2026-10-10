@@ -33,7 +33,12 @@ export async function indexerLoop() {
     for (const word of tokens) {
       if (word.length <= 3) continue;
 
-      indexerManager.add(word, val.url);
+      indexerManager.add({
+        id: val.id,
+        host: val.host,
+        word,
+        url: val.url,
+      });
     }
   }
 }
