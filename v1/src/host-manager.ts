@@ -48,7 +48,7 @@ class HostManager {
   getNextHostUrl() {
     let nextAllowedUrl: string | null = null;
     let nextAllowedUrlId: string | null = null;
-
+    let host: string | null = null;
     const now = Date.now();
 
     for (const [key, val] of this.hosts.entries()) {
@@ -59,6 +59,7 @@ class HostManager {
         const url = val.urls[0]!;
         nextAllowedUrl = url.url;
         nextAllowedUrlId = url.id;
+        host = key;
 
         // deleting it then
         const filteredHostUrls = val.urls.filter((val) => val.url !== url.url);
@@ -81,7 +82,7 @@ class HostManager {
 
     console.log("next-url", nextAllowedUrl);
 
-    return { url: nextAllowedUrl, id: nextAllowedUrlId };
+    return { url: nextAllowedUrl, id: nextAllowedUrlId, host };
   }
 
   checkExistingUrl({ url }: { url: string }) {
