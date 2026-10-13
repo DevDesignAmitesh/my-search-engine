@@ -45,7 +45,7 @@ class HostManager {
     // console.log("ADDED_URL", url);
   }
 
-  getNextHostUrl() {
+  getNextHostUrl = async () => {
     let nextAllowedUrl: string | null = null;
     let nextAllowedUrlId: string | null = null;
     let host: string | null = null;
@@ -54,36 +54,61 @@ class HostManager {
     for (const [key, val] of this.hosts.entries()) {
       console.log("host", key, "isAllowed-or-not", now - val.nextAllowedTime);
 
-      if (now > val.nextAllowedTime && val.urls.length) {
-        // getting the first url and assigning it
-        const url = val.urls[0]!;
-        nextAllowedUrl = url.url;
-        nextAllowedUrlId = url.id;
-        host = key;
-
-        // deleting it then
-        const filteredHostUrls = val.urls.filter((val) => val.url !== url.url);
-        val.urls = filteredHostUrls;
-
-        // updating the nextallowed time
-        let timeObject = new Date();
-        const milliseconds = 2 * 1000; // 2 seconds = 2000 milliseconds
-        timeObject = new Date(timeObject.getTime() + milliseconds);
-
-        // assigning it
-        val.nextAllowedTime = timeObject.valueOf();
+      if (!val.urls.length) {
+        this.hosts.delete(key);
         break;
       }
 
-      if (!val.urls.length) {
-        this.hosts.delete(key);
-      }
+      // getting the first url and assigning it
+      const url = val.urls[0]!;
+      nextAllowedUrl = url.url;
+      nextAllowedUrlId = url.id;
+      host = key;
+
+      // deleting it then
+      const filteredHostUrls = val.urls.filter((val) => val.url !== url.url);
+      val.urls = filteredHostUrls;
+
+      // updating the nextallowed time
+      let timeObject = new Date();
+      const milliseconds = 2 * 1000; // 2 seconds = 2000 milliseconds
+      timeObject = new Date(timeObject.getTime() + milliseconds);
+
+      // assigning it
+      val.nextAllowedTime = timeObject.valueOf();
+
+      let timeout;
+
+      const response = await new Promise<{
+        url: string | null;
+        id: string | null;
+        host: string | null;
+      }>((res) => {
+        if (now > val.nextAllowedTime && val.urls.length) {
+          res({ url: nextAllowedUrl, id: nextAllowedUrlId, host });
+        } else {
+          const delay = val.nextAllowedTime - now;
+
+          timeout = setTimeout(() => {
+            console.log("executing");
+            res({ url: nextAllowedUrl, id: nextAllowedUrlId, host });
+          }, delay);
+        }
+      });
+
+      console.log({ response });
+
+      if (timeout) clearTimeout(timeout);
+      nextAllowedUrl = response.url;
+      nextAllowedUrlId = response.id;
+      host = response.host;
+      break;
     }
 
     console.log("next-url", nextAllowedUrl);
 
-    return { url: nextAllowedUrl, id: nextAllowedUrlId, host };
-  }
+    return { id: nextAllowedUrlId, host, url: nextAllowedUrl };
+  };
 
   checkExistingUrl({ url }: { url: string }) {
     return this.urls.find((val) => val == url);

@@ -3,12 +3,14 @@ import { htmlParser } from "./htmlparser";
 import fs from "fs";
 import { normalizeURLFn } from "./url-normalizer";
 import { metadataManager } from "./metadata-manager";
+import { publish } from "./file-comm";
 
 export async function crawlerLoop() {
   const now = Date.now();
 
   // getting per host url
-  const { url, id, host } = hostManager.getNextHostUrl();
+  const { url, id, host } = await hostManager.getNextHostUrl();
+
   if (!url || !id || !host) return;
 
   try {
@@ -47,6 +49,12 @@ export async function crawlerLoop() {
 
       hostManager.addUrlToHosts(normaliedUrl);
     }
+
+    console.log("PUBLISHHH");
+
+    publish({ host, id, url });
+
+    crawlerLoop();
   } catch (e) {
     console.log("error", e);
 

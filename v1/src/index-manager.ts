@@ -1,24 +1,15 @@
 import fs from "fs";
-import { metadataManager } from "./metadata-manager";
-type IndexesPayload = { urls: string[]; count: number; pages: string[] };
+
+type IndexesPayload = { urls: string[]; count: number; totalPages: number };
 
 type Indexes = Map<string, IndexesPayload>;
 
 class IndexerManager {
   private static instance: IndexerManager;
   private indexes: Indexes;
-  private count: number = 0;
 
   constructor() {
     this.indexes = new Map();
-
-    setInterval(() => {
-      console.log("SAVING_INDEX");
-      fs.writeFileSync(
-        "indexes.json",
-        JSON.stringify(Array.from(this.indexes)),
-      );
-    }, 10 * 1000);
   }
 
   static getInstance(): IndexerManager {
@@ -27,60 +18,71 @@ class IndexerManager {
     return IndexerManager.instance;
   }
 
-  add({
-    id,
-    word,
-    url,
-    host,
-    pages,
-  }: {
-    id: string;
-    host: string;
-    word: string;
-    url: string;
-    pages: string[];
-  }) {
-    const key = `id:${id}-url:${url}-host:${host}-word:${word}`;
+  save() {
+    fs.writeFileSync("indexes.json", JSON.stringify(Array.from(this.indexes)));
+  }
+
+  add({ word, url }: { word: string; url: string }) {
+    const key = word;
 
     if (!this.indexes.has(key)) {
-      this.indexes.set(key, { count: 1, urls: [url], pages });
+      this.indexes.set(key, { count: 1, urls: [url], totalPages: 1 });
     } else {
       const existing = this.indexes.get(key)!;
       existing.count += 1;
-      existing.pages = pages;
+
       const existingUrl = existing.urls.find((val) => val == url);
       if (!existingUrl) existing.urls.push(url);
+      existing.totalPages = existing.urls.length;
+
       this.indexes.set(key, existing);
     }
   }
 
   search(query: string) {
     const queries = query.split(/(\s+)/).filter((val) => val !== " ");
-    const suggestions = [];
+    const suggestions: Map<string, string> = new Map();
 
     for (const q of queries) {
       for (const [key, val] of this.indexes.entries()) {
-        const id = key.split("id:")[1]?.split("-url")[0]!;
-        const host = key.split("host:")[1]?.split("-word")[0]!;
-        const url = key.split("url:")[1]?.split("-host")[0]!;
-        const word = key.split("word:")[1]!;
+        const isOccured = checkOccurrence(q, key);
 
-        if (val.count > this.count && word.includes(q)) {
-          this.count = val.count;
-
-          const md = metadataManager.get({ host, id, url });
-
-          suggestions.push({
-            urls: val.urls,
-            title: md?.title,
-            snippet: md?.snippet,
-          });
+        if (isOccured) {
+          for (const url of val.urls) {
+            if (!suggestions.has(url)) suggestions.set(url, url);
+          }
         }
       }
     }
 
-    return suggestions;
+    return Array.from(suggestions.values());
   }
 }
 
 export const indexerManager = IndexerManager.getInstance();
+
+function checkOccurrence(query: string, compareWith: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedCompareWith = compareWith.trim().toLowerCase();
+
+  for (let i = 0; i < normalizedCompareWith.length; i++) {
+    let j;
+
+    for (j = 0; j < normalizedQuery.length; j++) {
+      if (normalizedCompareWith[i + j] !== normalizedQuery[j]) break;
+    }
+
+    if (j === normalizedQuery.length) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// console.log(
+//   checkOccurrence(
+//     "KIRAT",
+//     "harkirat singh harkirat singh harkirat singh harkirat singh v",
+//   ),
+// );

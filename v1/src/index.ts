@@ -3,7 +3,6 @@ import cors from "cors";
 import { hostManager } from "./host-manager";
 import { normalizeURLFn } from "./url-normalizer";
 import { crawlerLoop } from "./crawlerLoop";
-import { indexerLoop } from "./indexerLoop";
 import { indexerManager } from "./index-manager";
 
 const app = express();
@@ -36,18 +35,23 @@ app.post("/submit-url", (req, res) => {
   // add this url in the host's queue
   hostManager.addUrlToHosts(normaliedUrl);
 
+  // fire and forgot
+  crawlerLoop();
+
   res.status(200).json({ message: "url accepted for crawing" });
 });
 
 app.get("/search", (req, res) => {
   const { query } = req.query;
 
-  const suggestions = indexerManager.search(query as string);
+  if (typeof query !== "string" || query.length < 0) {
+    res.status(403).json({ message: "invalid input" });
+    return;
+  }
+
+  const suggestions = indexerManager.search(query);
 
   return res.status(200).json({ suggestions });
 });
 
 app.listen(port, () => console.log("code is running at", port));
-
-setInterval(crawlerLoop, 4 * 1000);
-setInterval(indexerLoop, 4 * 1000);
