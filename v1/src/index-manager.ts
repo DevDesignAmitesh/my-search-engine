@@ -1,6 +1,6 @@
 import fs from "fs";
 import { metadataManager } from "./metadata-manager";
-type IndexesPayload = { urls: string[]; count: number };
+type IndexesPayload = { urls: string[]; count: number; pages: string[] };
 
 type Indexes = Map<string, IndexesPayload>;
 
@@ -12,12 +12,13 @@ class IndexerManager {
   constructor() {
     this.indexes = new Map();
 
-    setTimeout(() => {
+    setInterval(() => {
+      console.log("SAVING_INDEX");
       fs.writeFileSync(
         "indexes.json",
         JSON.stringify(Array.from(this.indexes)),
       );
-    }, 20 * 1000);
+    }, 10 * 1000);
   }
 
   static getInstance(): IndexerManager {
@@ -31,19 +32,22 @@ class IndexerManager {
     word,
     url,
     host,
+    pages,
   }: {
     id: string;
     host: string;
     word: string;
     url: string;
+    pages: string[];
   }) {
     const key = `id:${id}-url:${url}-host:${host}-word:${word}`;
 
     if (!this.indexes.has(key)) {
-      this.indexes.set(key, { count: 1, urls: [url] });
+      this.indexes.set(key, { count: 1, urls: [url], pages });
     } else {
       const existing = this.indexes.get(key)!;
       existing.count += 1;
+      existing.pages = pages;
       const existingUrl = existing.urls.find((val) => val == url);
       if (!existingUrl) existing.urls.push(url);
       this.indexes.set(key, existing);

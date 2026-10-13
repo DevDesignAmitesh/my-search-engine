@@ -28,16 +28,27 @@ export async function indexerLoop() {
       title,
       snippet,
       status: "indexed",
+      tokens,
     });
+
+    const pages = [val.url];
 
     for (const word of tokens) {
       if (word.length <= 3) continue;
+
+      const existingMetaDatas = metadataManager.getAll();
+
+      // for counting how many pages contain this word;
+      for (const [key, val] of existingMetaDatas) {
+        if (val.tokens.includes(word)) pages.push(val.url);
+      }
 
       indexerManager.add({
         id: val.id,
         host: val.host,
         word,
         url: val.url,
+        pages,
       });
     }
   }

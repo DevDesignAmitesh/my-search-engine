@@ -45,8 +45,6 @@ export async function crawlerLoop() {
       const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
       if (existingUrl) continue;
 
-      console.log("existingURL", existingUrl);
-
       hostManager.addUrlToHosts(normaliedUrl);
     }
   } catch (e) {

@@ -1,5 +1,3 @@
-import fs from "fs";
-
 type MetaDataPayload = {
   id: string;
   url: string;
@@ -7,6 +5,7 @@ type MetaDataPayload = {
   status: "crawled" | "indexed" | "failed";
   crawl_itme: number;
   index_time?: number;
+  tokens: string[];
   raw_file_location?: string;
   title?: string;
   snippet?: string;
@@ -20,9 +19,6 @@ class MetadataManager {
 
   constructor() {
     this.metadatas = new Map();
-    setTimeout(() => {
-      fs.writeFileSync("md.json", JSON.stringify(Array.from(this.metadatas)));
-    }, 10 * 1000);
   }
 
   static getInstance(): MetadataManager {
