@@ -25,8 +25,6 @@ app.post("/submit-url", (req, res) => {
   // check if its already existing
   const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
 
-  console.log("existingURL", existingUrl);
-
   if (existingUrl) {
     res.status(403).json({ message: "url already exists" });
     return;

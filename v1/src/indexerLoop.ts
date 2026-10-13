@@ -1,41 +1,48 @@
-import { subscribe } from "./file-comm";
+import { get } from "./file-comm";
 import { htmlParser } from "./htmlparser";
 import { indexerManager } from "./index-manager";
 import { metadataManager } from "./metadata-manager";
 import { tokeizer } from "./tokenizer";
 
 export async function indexerLoop() {
-  console.log("indexing");
+  try {
+    const data = get();
 
-  const { data } = await subscribe();
+    console.log("in the indexer");
 
-  const { host, id, url } = JSON.parse(data);
+    const { host, id, url } = JSON.parse(data);
 
-  const val = metadataManager.get({ host, id, url });
+    const val = metadataManager.get({ host, id, url });
 
-  if (!val) return;
-  if (val.status !== "crawled") return;
+    if (!val) return;
+    if (val.status !== "crawled") return;
 
-  const { raw_text, title } = await htmlParser(val.raw_file_location!, "file");
+    const { raw_text, title } = await htmlParser(
+      val.raw_file_location!,
+      "file",
+    );
 
-  const tokens = tokeizer(raw_text);
-  const snippet = raw_text.slice(0, 300);
+    const tokens = tokeizer(raw_text);
+    const snippet = raw_text.slice(0, 300);
 
-  for (const word of tokens) {
-    indexerManager.add({
-      word,
-      url: val.url,
+    for (const word of tokens) {
+      indexerManager.add({
+        word,
+        url: val.url,
+      });
+    }
+
+    metadataManager.add({
+      ...val,
+      title,
+      snippet,
+      status: "indexed",
+      tokens,
     });
+
+    metadataManager.save();
+    indexerManager.save();
+  } catch (e) {
+    console.log("error in indexloop", e);
   }
-
-  metadataManager.add({
-    ...val,
-    title,
-    snippet,
-    status: "indexed",
-    tokens,
-  });
-
-  metadataManager.save();
-  indexerManager.save();
 }

@@ -79,10 +79,3 @@ function checkOccurrence(query: string, compareWith: string): boolean {
 
   return false;
 }
-
-// console.log(
-//   checkOccurrence(
-//     "KIRAT",
-//     "harkirat singh harkirat singh harkirat singh harkirat singh v",
-//   ),
-// );

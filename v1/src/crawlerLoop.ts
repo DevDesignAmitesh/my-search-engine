@@ -3,7 +3,8 @@ import { htmlParser } from "./htmlparser";
 import fs from "fs";
 import { normalizeURLFn } from "./url-normalizer";
 import { metadataManager } from "./metadata-manager";
-import { publish } from "./file-comm";
+import { push } from "./file-comm";
+import { indexerLoop } from "./indexerLoop";
 
 export async function crawlerLoop() {
   const now = Date.now();
@@ -24,20 +25,6 @@ export async function crawlerLoop() {
 
     if (!fs.existsSync(fileLocation)) fs.writeFileSync(fileLocation, html);
 
-    const crawlTime = Date.now() - now;
-
-    console.log("time-taken-in-a-single-crawl", crawlTime);
-
-    // save meta-data
-    metadataManager.add({
-      id,
-      host,
-      url,
-      status: "crawled",
-      raw_file_location: fileLocation,
-      crawl_itme: crawlTime,
-    });
-
     for (const val of hrefs) {
       // if a in-valid url
       const normaliedUrl = normalizeURLFn(val);
@@ -50,14 +37,25 @@ export async function crawlerLoop() {
       hostManager.addUrlToHosts(normaliedUrl);
     }
 
-    console.log("PUBLISHHH");
+    const crawlTime = Date.now() - now;
 
-    publish({ host, id, url });
+    console.log("crawelTime", crawlTime);
+
+    // save meta-data
+    metadataManager.add({
+      id,
+      host,
+      url,
+      status: "crawled",
+      raw_file_location: fileLocation,
+      crawl_itme: crawlTime,
+    });
+
+    push({ host, id, url });
 
     crawlerLoop();
+    indexerLoop();
   } catch (e) {
-    console.log("error", e);
-
     const crawlTime = Date.now() - now;
 
     // save meta-data
