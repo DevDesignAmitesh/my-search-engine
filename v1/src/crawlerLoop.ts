@@ -3,16 +3,20 @@ import { htmlParser } from "./htmlparser";
 import fs from "fs";
 import { normalizeURLFn } from "./url-normalizer";
 import { metadataManager } from "./metadata-manager";
-import { push } from "./file-comm";
 import { indexerLoop } from "./indexerLoop";
 
 export async function crawlerLoop() {
+  console.log("running");
+
   const now = Date.now();
 
   // getting per host url
   const { url, id, host } = await hostManager.getNextHostUrl();
 
-  if (!url || !id || !host) return;
+  if (!url || !id || !host) {
+    setTimeout(crawlerLoop, 5 * 1000);
+    return;
+  }
 
   try {
     // get the html
@@ -51,10 +55,9 @@ export async function crawlerLoop() {
       crawl_itme: crawlTime,
     });
 
-    push({ host, id, url });
-
     crawlerLoop();
-    indexerLoop();
+    indexerLoop({ id, host, url });
+    hostManager.setNextAllowedTimeForHost({ host });
   } catch (e) {
     const crawlTime = Date.now() - now;
 
@@ -66,5 +69,7 @@ export async function crawlerLoop() {
       status: "failed",
       crawl_itme: crawlTime,
     });
+
+    crawlerLoop();
   }
 }

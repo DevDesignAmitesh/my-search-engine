@@ -7,7 +7,6 @@ type MetaDataPayload = {
   status: "crawled" | "indexed" | "failed";
   crawl_itme: number;
   index_time?: number;
-  tokens?: string[];
   raw_file_location?: string;
   title?: string;
   snippet?: string;
@@ -34,13 +33,13 @@ class MetadataManager {
   }
 
   add(payload: MetaDataPayload) {
-    const key = `id:${payload.id}-url:${payload.url}-host:${payload.host}`;
+    const key = `url:${payload.url}-host:${payload.host}`;
 
     this.metadatas.set(key, payload);
   }
 
-  get({ id, url, host }: { id: string; url: string; host: string }) {
-    const key = `id:${id}-url:${url}-host:${host}`;
+  get({ url, host }: { url: string; host: string }) {
+    const key = `url:${url}-host:${host}`;
 
     return this.metadatas.get(key);
   }

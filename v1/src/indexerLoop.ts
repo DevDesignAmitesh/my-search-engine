@@ -1,17 +1,18 @@
-import { get } from "./file-comm";
 import { htmlParser } from "./htmlparser";
 import { indexerManager } from "./index-manager";
 import { metadataManager } from "./metadata-manager";
 import { tokeizer } from "./tokenizer";
 
-export async function indexerLoop() {
+export async function indexerLoop({
+  host,
+  id,
+  url,
+}: {
+  host: string;
+  id: string;
+  url: string;
+}) {
   try {
-    const data = get();
-
-    console.log("in the indexer");
-
-    const { host, id, url } = JSON.parse(data);
-
     const val = metadataManager.get({ host, id, url });
 
     if (!val) return;
@@ -37,11 +38,7 @@ export async function indexerLoop() {
       title,
       snippet,
       status: "indexed",
-      tokens,
     });
-
-    metadataManager.save();
-    indexerManager.save();
   } catch (e) {
     console.log("error in indexloop", e);
   }

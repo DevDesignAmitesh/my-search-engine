@@ -6,12 +6,12 @@ type Hosts = Map<
 class HostManager {
   private static instance: HostManager;
   private hosts: Hosts;
-  private urls: string[];
+  private urls: Map<string, string>;
 
   constructor() {
     // todo: hydrate it via db
     this.hosts = new Map();
-    this.urls = [];
+    this.urls = new Map();
   }
 
   static getInstance(): HostManager {
@@ -40,7 +40,7 @@ class HostManager {
       this.hosts.get(host)!.urls.push({ url, id: crypto.randomUUID() });
     }
 
-    this.urls.push(url);
+    this.urls.set(url, url);
   }
 
   getNextHostUrl = async () => {
@@ -65,28 +65,21 @@ class HostManager {
 
       let timeout;
 
-      // updating the nextallowed time
-      let timeObject = new Date();
-      const milliseconds = 2 * 1000; // 2 seconds = 2000 milliseconds
-      timeObject = new Date(timeObject.getTime() + milliseconds);
-
-      console.log("allowed or not", now > val.nextAllowedTime);
-      console.log("delay", now - val.nextAllowedTime);
-
       const response = await new Promise<{
         url: string | null;
         id: string | null;
         host: string | null;
-      }>((res) => {
+      } | null>((res) => {
         if (now > val.nextAllowedTime && val.urls.length) {
-          // assigning it
-          val.nextAllowedTime = timeObject.valueOf();
           res({ url: nextAllowedUrl, id: nextAllowedUrlId, host });
         } else {
+          // res(null);
           const delay = val.nextAllowedTime - now;
 
+          console.log("delay", delay);
+
           timeout = setTimeout(() => {
-            val.nextAllowedTime = timeObject.valueOf();
+            console.log("executed");
             res({ url: nextAllowedUrl, id: nextAllowedUrlId, host });
           }, delay);
         }
@@ -97,6 +90,8 @@ class HostManager {
       val.urls = filteredHostUrls;
 
       if (timeout) clearTimeout(timeout);
+      if (!response) continue;
+
       nextAllowedUrl = response.url;
       nextAllowedUrlId = response.id;
       host = response.host;
@@ -108,7 +103,23 @@ class HostManager {
   };
 
   checkExistingUrl({ url }: { url: string }) {
-    return this.urls.find((val) => val == url);
+    return this.urls.get(url);
+  }
+
+  getSize() {
+    return this.urls.size;
+  }
+
+  setNextAllowedTimeForHost({ host }: { host: string }) {
+    const existing = this.hosts.get(host)!;
+
+    // updating the nextallowed time
+    let timeObject = new Date();
+    const milliseconds = 2 * 1000; // 2 seconds = 2000 milliseconds
+    timeObject = new Date(timeObject.getTime() + milliseconds);
+
+    // assigning it
+    existing.nextAllowedTime = timeObject.valueOf();
   }
 }
 

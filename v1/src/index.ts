@@ -4,6 +4,15 @@ import { hostManager } from "./host-manager";
 import { normalizeURLFn } from "./url-normalizer";
 import { crawlerLoop } from "./crawlerLoop";
 import { indexerManager } from "./index-manager";
+import z from "zod";
+
+const querySchema = z.object({
+  query: z.string(),
+});
+
+const urlSchema = z.object({
+  url: z.url(),
+});
 
 const app = express();
 const port = 4000;
@@ -12,13 +21,20 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/submit-url", (req, res) => {
-  const { url } = req.body;
+  const { data, success } = urlSchema.safeParse({ url: req.body.url });
+
+  if (!success) {
+    res.status(400).json({ message: "invalid-url" });
+    return;
+  }
+
+  const { url } = data;
 
   // todo: normalize url
   const normaliedUrl = normalizeURLFn(url);
 
   if (!normaliedUrl) {
-    res.status(403).json({ message: "invalid-url" });
+    res.status(400).json({ message: "invalid-url" });
     return;
   }
 
@@ -26,26 +42,34 @@ app.post("/submit-url", (req, res) => {
   const existingUrl = hostManager.checkExistingUrl({ url: normaliedUrl });
 
   if (existingUrl) {
-    res.status(403).json({ message: "url already exists" });
+    res.status(409).json({ message: "url already exists" });
     return;
   }
 
-  // add this url in the host's queue
-  hostManager.addUrlToHosts(normaliedUrl);
+  const length = hostManager.getSize();
 
-  // fire and forgot
-  crawlerLoop();
+  if (length === 0) {
+    // add this url in the host's queue
+    hostManager.addUrlToHosts(normaliedUrl);
+    // fire and forgot
+    crawlerLoop();
+  } else {
+    // add this url in the host's queue
+    hostManager.addUrlToHosts(normaliedUrl);
+  }
 
   res.status(200).json({ message: "url accepted for crawing" });
 });
 
 app.get("/search", (req, res) => {
-  const { query } = req.query;
+  const { data, success } = querySchema.safeParse({ query: req.query.query });
 
-  if (typeof query !== "string" || query.length < 0) {
-    res.status(403).json({ message: "invalid input" });
+  if (!success) {
+    res.status(400).json({ message: "invalid input" });
     return;
   }
+
+  const { query } = data;
 
   const suggestions = indexerManager.search(query);
 

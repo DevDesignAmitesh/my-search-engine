@@ -3,7 +3,6 @@ import normalizeUrl from "normalize-url";
 export function normalizeURLFn(url: string) {
   try {
     return normalizeUrl(url, {
-      removeExplicitPort: true,
       stripHash: true,
       stripTextFragment: true,
     });
