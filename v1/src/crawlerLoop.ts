@@ -55,9 +55,9 @@ export async function crawlerLoop() {
       crawl_itme: crawlTime,
     });
 
-    crawlerLoop();
-    indexerLoop({ id, host, url });
     hostManager.setNextAllowedTimeForHost({ host });
+    indexerLoop({ id, host, url });
+    crawlerLoop();
   } catch (e) {
     const crawlTime = Date.now() - now;
 
@@ -70,6 +70,7 @@ export async function crawlerLoop() {
       crawl_itme: crawlTime,
     });
 
+    hostManager.setNextAllowedTimeForHost({ host });
     crawlerLoop();
   }
 }

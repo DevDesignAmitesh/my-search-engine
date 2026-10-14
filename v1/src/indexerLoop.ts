@@ -13,7 +13,7 @@ export async function indexerLoop({
   url: string;
 }) {
   try {
-    const val = metadataManager.get({ host, id, url });
+    const val = metadataManager.get({ host, url });
 
     if (!val) return;
     if (val.status !== "crawled") return;
