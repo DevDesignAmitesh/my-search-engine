@@ -5,6 +5,7 @@ import { normalizeURLFn } from "./url-normalizer";
 import { crawlerLoop } from "./crawlerLoop";
 import { indexerManager } from "./index-manager";
 import z from "zod";
+import { metadataManager } from "./metadata-manager";
 
 const querySchema = z.object({
   query: z.string(),
@@ -58,7 +59,9 @@ app.post("/submit-url", (req, res) => {
     hostManager.addUrlToHosts(normaliedUrl);
   }
 
-  res.status(200).json({ message: "url accepted for crawing" });
+  const metaData = metadataManager.getMetaDataInArray();
+
+  res.status(200).json({ message: "url accepted for crawing", metaData });
 });
 
 app.get("/search", (req, res) => {
@@ -74,6 +77,12 @@ app.get("/search", (req, res) => {
   const suggestions = indexerManager.search(query);
 
   return res.status(200).json({ suggestions });
+});
+
+app.get("/metadata", (req, res) => {
+  const metaData = metadataManager.getMetaDataInArray();
+
+  return res.json({ metaData });
 });
 
 app.listen(port, () => console.log("code is running at", port));

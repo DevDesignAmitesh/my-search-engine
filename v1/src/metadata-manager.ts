@@ -47,6 +47,10 @@ class MetadataManager {
   getAll() {
     return this.metadatas;
   }
+
+  getMetaDataInArray() {
+    return Array.from(this.metadatas.values());
+  }
 }
 
 export const metadataManager = MetadataManager.getInstance();

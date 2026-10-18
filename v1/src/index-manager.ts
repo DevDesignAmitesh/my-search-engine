@@ -4,10 +4,10 @@ import { metadataManager } from "./metadata-manager";
 import { hostManager } from "./host-manager";
 
 type IndexesPayload = {
-  urls: string[];
   count: number;
   totalPages: number;
   countPerPage: Map<string, number>;
+  pageLength: number;
 };
 
 type Indexes = Map<string, IndexesPayload>;
@@ -30,23 +30,27 @@ class IndexerManager {
     fs.writeFileSync("indexes.json", JSON.stringify(Array.from(this.indexes)));
   }
 
-  add({ word, url }: { word: string; url: string }) {
+  add({
+    word,
+    url,
+    pageLength,
+  }: {
+    word: string;
+    url: string;
+    pageLength: number;
+  }) {
     const key = word;
 
     if (!this.indexes.has(key)) {
       this.indexes.set(key, {
         count: 1,
-        urls: [url],
         totalPages: 1,
         countPerPage: new Map().set(url, 1),
+        pageLength,
       });
     } else {
       const existing = this.indexes.get(key)!;
       existing.count += 1;
-
-      const existingUrl = existing.urls.find((val) => val == url);
-
-      if (!existingUrl) existing.urls.push(url);
 
       const existingPerPageUrl = existing.countPerPage.get(url);
 
@@ -56,63 +60,53 @@ class IndexerManager {
         existing.countPerPage.set(url, 1);
       }
 
-      existing.totalPages = existing.urls.length;
-
       this.indexes.set(key, existing);
     }
   }
 
   search(query: string) {
-    // const queries = query.split(/(\s+)/).filter((val) => val !== " ");
     const queries = tokeizer(query);
-    const suggestions: Map<
-      string,
-      { url: string; title: string; snippet: string }
-    > = new Map();
+
+    const commonUrl = new Set();
 
     for (const q of queries) {
-      for (const [key, val] of this.indexes.entries()) {
-        // const isOccured = checkOccurrence(q, key);
-        const isOccured = q === key;
+      const val = this.indexes.get(q);
 
-        if (isOccured) {
-          for (const url of val.urls) {
-            if (!suggestions.has(url)) {
-              const host = hostManager.getHost(url);
-              const md = metadataManager.get({ url, host })!;
+      if (val) {
+        for (const url of Array.from(val.countPerPage.keys())) {
+          const host = hostManager.getHost(url);
+          const md = metadataManager.get({ url, host });
 
-              suggestions.set(url, {
-                url,
-                snippet: md.snippet!,
-                title: md.title!,
-              });
-            }
-          }
+          commonUrl.add({
+            url,
+            title: md?.title,
+            snippet: md?.snippet,
+          });
         }
       }
     }
 
-    return Array.from(suggestions.values());
+    return Array.from(commonUrl.values());
   }
 }
 
 export const indexerManager = IndexerManager.getInstance();
 
-function checkOccurrence(query: string, compareWith: string): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
-  const normalizedCompareWith = compareWith.trim().toLowerCase();
+// function checkOccurrence(query: string, compareWith: string): boolean {
+//   const normalizedQuery = query.trim().toLowerCase();
+//   const normalizedCompareWith = compareWith.trim().toLowerCase();
 
-  for (let i = 0; i < normalizedCompareWith.length; i++) {
-    let j;
+//   for (let i = 0; i < normalizedCompareWith.length; i++) {
+//     let j;
 
-    for (j = 0; j < normalizedQuery.length; j++) {
-      if (normalizedCompareWith[i + j] !== normalizedQuery[j]) break;
-    }
+//     for (j = 0; j < normalizedQuery.length; j++) {
+//       if (normalizedCompareWith[i + j] !== normalizedQuery[j]) break;
+//     }
 
-    if (j === normalizedQuery.length) {
-      return true;
-    }
-  }
+//     if (j === normalizedQuery.length) {
+//       return true;
+//     }
+//   }
 
-  return false;
-}
+//   return false;
+// }

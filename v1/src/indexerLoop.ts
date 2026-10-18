@@ -2,6 +2,7 @@ import { htmlParser } from "./htmlparser";
 import { indexerManager } from "./index-manager";
 import { metadataManager } from "./metadata-manager";
 import { tokeizer } from "./tokenizer";
+import fs from "fs";
 
 export async function indexerLoop({
   host,
@@ -30,6 +31,7 @@ export async function indexerLoop({
       indexerManager.add({
         word,
         url: val.url,
+        pageLength: tokens.length,
       });
     }
 
@@ -39,6 +41,8 @@ export async function indexerLoop({
       snippet,
       status: "indexed",
     });
+
+    fs.unlinkSync(val.raw_file_location!);
   } catch (e) {
     console.log("error in indexloop", e);
   }
